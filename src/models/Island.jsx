@@ -1,44 +1,34 @@
-import { useRef, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useGLTF } from "@react-three/drei";
+import { useEffect } from "react";
+import islandSceneUrl from "../assets/3d/island.glb?url";
 
-// Import the placeholder instead of the .glb file
-import islandScene from "../assets/3d/island.js";
+const Island = () => {
+  const { scene } = useGLTF(islandSceneUrl);
 
-const Island = ({ isRotating, setIsRotating, setCurrentStage, ...props }) => {
-  const islandRef = useRef();
-  const { camera } = useThree();
+  useEffect(() => {
+    return () => {
+      if (scene) {
+        scene.traverse((object) => {
+          if (object.isMesh) {
+            object.geometry.dispose();
+            object.material.dispose();
+          }
+        });
+      }
+    };
+  }, [scene]);
 
-  useFrame((state, delta) => {
-    if (isRotating) {
-      islandRef.current.rotation.y += 0.25 * delta;
-      
-      // Update camera position based on island rotation
-      const angle = islandRef.current.rotation.y;
-      const radius = 7;
-      camera.position.x = Math.sin(angle) * radius;
-      camera.position.z = Math.cos(angle) * radius;
-      camera.lookAt(0, 0, 0);
-    }
-  });
-
-  const handlePointerDown = (e) => {
-    e.stopPropagation();
-    setIsRotating(true);
-  };
-
-  const handlePointerUp = (e) => {
-    e.stopPropagation();
-    setIsRotating(false);
-  };
+  if (!scene) {
+    console.error("Failed to load island model");
+    return null;
+  }
 
   return (
-    <group ref={islandRef} {...props} onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
-      <mesh>
-        <boxGeometry args={[3, 0.5, 3]} />
-        <meshStandardMaterial color="green" />
-      </mesh>
-    </group>
+    <primitive object={scene} />
   );
 };
 
 export default Island;
+
+// Add this at the end of the file
+useGLTF.preload(islandSceneUrl);

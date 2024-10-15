@@ -1,58 +1,41 @@
 import React, { useRef, useEffect } from "react";
 import { useGLTF, useAnimations } from "@react-three/drei";
+import foxScene from "../assets/3d/fox.glb?url";
 
 const Fox = ({ currentAnimation, ...props }) => {
   const group = useRef();
-  const { nodes, materials, animations } = useGLTF("/src/assets/3d/fox.glb");
+  const { scene, animations } = useGLTF(foxScene);
   const { actions } = useAnimations(animations, group);
 
   useEffect(() => {
-    Object.values(actions).forEach((action) => action.stop());
-
-    if (actions[currentAnimation]) {
-      actions[currentAnimation].play();
+    const action = actions[currentAnimation];
+    if (action) {
+      action.reset().fadeIn(0.5).play();
+      return () => action.fadeOut(0.5);
     }
   }, [actions, currentAnimation]);
 
-  return (
-    <group ref={group} {...props} dispose={null}>
-      <group name="Sketchfab_Scene">
-        <primitive object={nodes.GLTF_created_0} />
-        <primitive object={nodes.GLTF_created_1} />
-        <primitive object={nodes.GLTF_created_2} />
-        <skinnedMesh
-          name="Object_7"
-          geometry={nodes.Object_7.geometry}
-          material={materials.PaletteMaterial001}
-          skeleton={nodes.Object_7.skeleton}
-        />
-        <skinnedMesh
-          name="Object_8"
-          geometry={nodes.Object_8.geometry}
-          material={materials.PaletteMaterial001}
-          skeleton={nodes.Object_8.skeleton}
-        />
-        <skinnedMesh
-          name="Object_9"
-          geometry={nodes.Object_9.geometry}
-          material={materials.PaletteMaterial001}
-          skeleton={nodes.Object_9.skeleton}
-        />
-        <skinnedMesh
-          name="Object_10"
-          geometry={nodes.Object_10.geometry}
-          material={materials.PaletteMaterial001}
-          skeleton={nodes.Object_10.skeleton}
-        />
-        <skinnedMesh
-          name="Object_11"
-          geometry={nodes.Object_11.geometry}
-          material={materials.PaletteMaterial001}
-          skeleton={nodes.Object_11.skeleton}
-        />
-      </group>
-    </group>
-  );
+  useEffect(() => {
+    return () => {
+      if (scene) {
+        scene.traverse((object) => {
+          if (object.isMesh) {
+            object.geometry.dispose();
+            object.material.dispose();
+          }
+        });
+      }
+    };
+  }, [scene]);
+
+  if (!scene) {
+    console.error("Failed to load fox model");
+    return null;
+  }
+
+  return <primitive ref={group} object={scene} {...props} />;
 };
 
 export default Fox;
+
+useGLTF.preload(foxScene);

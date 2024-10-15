@@ -1,24 +1,35 @@
-import { useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { useEffect } from "react";
+import skySceneUrl from "../assets/3d/sky.glb?url";
 
-// Import the placeholder instead of the .glb file
-import skyScene from "../assets/3d/sky.js";
+const Sky = () => {
+  const { scene } = useGLTF(skySceneUrl);
 
-const Sky = ({ isRotating }) => {
-  const skyRef = useRef();
+  useEffect(() => {
+    return () => {
+      // Cleanup function to unload the GLTF model when the component unmounts
+      if (scene) {
+        scene.traverse((object) => {
+          if (object.isMesh) {
+            object.geometry.dispose();
+            object.material.dispose();
+          }
+        });
+      }
+    };
+  }, [scene]);
 
-  useFrame((_, delta) => {
-    if (isRotating) {
-      skyRef.current.rotation.y += 0.25 * delta;
-    }
-  });
+  if (!scene) {
+    console.error("Failed to load sky model");
+    return null;
+  }
 
   return (
-    <mesh ref={skyRef}>
-      <sphereGeometry args={[50, 32, 32]} />
-      <meshBasicMaterial color="#87CEEB" side={2} />
-    </mesh>
+    <primitive object={scene} />
   );
 };
 
 export default Sky;
+
+// Add this at the end of the file
+useGLTF.preload(skySceneUrl);

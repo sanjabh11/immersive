@@ -1,24 +1,34 @@
-import { useEffect, useRef } from "react";
-import { useFrame } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
+import { useEffect } from "react";
+import planeSceneUrl from "../assets/3d/plane.glb?url";
 
-// Import the placeholder instead of the .glb file
-import planeScene from "../assets/3d/plane.js";
+const Plane = () => {
+  const { scene } = useGLTF(planeSceneUrl);
 
-const Plane = ({ isRotating, ...props }) => {
-  const ref = useRef();
+  useEffect(() => {
+    return () => {
+      if (scene) {
+        scene.traverse((object) => {
+          if (object.isMesh) {
+            object.geometry.dispose();
+            object.material.dispose();
+          }
+        });
+      }
+    };
+  }, [scene]);
 
-  useFrame((state, delta) => {
-    if (isRotating) {
-      ref.current.position.y = Math.sin(state.clock.elapsedTime) * 0.2 + 2;
-    }
-  });
+  if (!scene) {
+    console.error("Failed to load plane model");
+    return null;
+  }
 
   return (
-    <mesh ref={ref} {...props}>
-      <boxGeometry args={[1, 0.2, 1]} />
-      <meshStandardMaterial color="blue" />
-    </mesh>
+    <primitive object={scene} />
   );
 };
 
 export default Plane;
+
+// Add this at the end of the file
+useGLTF.preload(planeSceneUrl);

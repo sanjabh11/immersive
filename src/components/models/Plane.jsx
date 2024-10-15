@@ -19,7 +19,7 @@ const Plane = ({ isRotating, ...props }) => {
   return (
     <mesh ref={ref} {...props}>
       <boxGeometry args={[1, 0.2, 0.5]} />
-      <meshStandardMaterial color="blue" />
+      <meshStandardMaterial color="#87CEEB" />
     </mesh>
   );
 };
